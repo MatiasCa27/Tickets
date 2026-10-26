@@ -1,6 +1,7 @@
 package com.example.tickets
 
 import android.os.Bundle
+import android.util.Base64
 import android.util.Patterns
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -21,31 +22,46 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.room.Room
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.security.SecureRandom
+import java.util.Locale
 
 class RegistroActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val db = Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java,
+            "tickets.db"
+        ).build()
+
         setContent {
             Scaffold { padding ->
-                PantallaRegistro(Modifier.padding(padding)) { finish() }
+                PantallaRegistro(db.usuarioDao(), Modifier.padding(padding)) { finish() }
             }
         }
     }
 }
 
 @Composable
-fun PantallaRegistro(modifier: Modifier = Modifier, onVolver: () -> Unit) {
+fun PantallaRegistro(dao: UsuarioDAO, modifier: Modifier = Modifier, onVolver: () -> Unit) {
+    val scope = rememberCoroutineScope()
     var nombre by remember { mutableStateOf("") }
     var cargo by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
     var contrasena by remember { mutableStateOf("") }
     var confirmar by remember { mutableStateOf("") }
     var mensaje by remember { mutableStateOf("") }
+    var guardando by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp)) {
         Text("Registro de usuarios")
@@ -100,17 +116,56 @@ fun PantallaRegistro(modifier: Modifier = Modifier, onVolver: () -> Unit) {
 
         Button(
             onClick = {
-                mensaje = when {
-                    nombre.isBlank() || cargo.isBlank() || correo.isBlank() || contrasena.isBlank() || confirmar.isBlank() -> "Complete todos los campos"
-                    !Patterns.EMAIL_ADDRESS.matcher(correo.trim()).matches() -> "Ingrese un correo válido"
-                    contrasena.length < 8 -> "La contraseña debe tener mínimo 8 caracteres"
-                    contrasena != confirmar -> "Las contraseñas no coinciden"
-                    else -> "Datos válidos. Registro pendiente de guardar"
+                when {
+                    nombre.isBlank() || cargo.isBlank() || correo.isBlank() || contrasena.isBlank() || confirmar.isBlank() -> mensaje = "Complete todos los campos"
+                    !Patterns.EMAIL_ADDRESS.matcher(correo.trim()).matches() -> mensaje = "Ingrese un correo válido"
+                    contrasena.length < 8 -> mensaje = "La contraseña debe tener mínimo 8 caracteres"
+                    contrasena != confirmar -> mensaje = "Las contraseñas no coinciden"
+                    else -> {
+                        val nombreFinal = nombre.trim()
+                        val cargoFinal = cargo.trim()
+                        val correoFinal = correo.trim().lowercase(Locale.ROOT)
+                        val clave = contrasena
+                        guardando = true
+                        scope.launch {
+                            try {
+                                if (dao.buscarPorCorreo(correoFinal) != null) {
+                                    mensaje = "Este correo ya está registrado"
+                                } else {
+                                    val salt = ByteArray(16)
+                                    SecureRandom().nextBytes(salt)
+                                    val hash = withContext(Dispatchers.Default) {
+                                        Seguridad.generarHash(clave, salt)
+                                    }
+                                    dao.insertar(
+                                        Usuario(
+                                            nombre = nombreFinal,
+                                            cargo = cargoFinal,
+                                            correo = correoFinal,
+                                            contrasenaHash = hash,
+                                            salt = Base64.encodeToString(salt, Base64.NO_WRAP)
+                                        )
+                                    )
+                                    nombre = ""
+                                    cargo = ""
+                                    correo = ""
+                                    contrasena = ""
+                                    confirmar = ""
+                                    mensaje = "Usuario registrado correctamente"
+                                }
+                            } catch (e: Exception) {
+                                mensaje = "No se pudo guardar el usuario"
+                            } finally {
+                                guardando = false
+                            }
+                        }
+                    }
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !guardando
         ) {
-            Text("Validar registro")
+            Text(if (guardando) "Guardando..." else "Registrarse")
         }
 
         Spacer(Modifier.height(12.dp))

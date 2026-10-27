@@ -6,12 +6,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
@@ -19,20 +24,25 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 
 class DocumentosActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -64,6 +74,13 @@ fun PantallaDocumentos(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     var mensaje by remember { mutableStateOf("") }
     var cargando by remember { mutableStateOf(false) }
+    var documentos by remember { mutableStateOf(listOf<File>()) }
+
+    LaunchedEffect(Unit) {
+        documentos = withContext(Dispatchers.IO) {
+            listarDocumentos(contexto)
+        }
+    }
 
     val selector = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
@@ -72,6 +89,9 @@ fun PantallaDocumentos(modifier: Modifier = Modifier) {
                 try {
                     val nombre = withContext(Dispatchers.IO) {
                         guardarDocumento(contexto, uri)
+                    }
+                    documentos = withContext(Dispatchers.IO) {
+                        listarDocumentos(contexto)
                     }
                     mensaje = "Documento cargado: $nombre"
                 } catch (e: Exception) {
@@ -83,11 +103,13 @@ fun PantallaDocumentos(modifier: Modifier = Modifier) {
         }
     }
 
-    Column(modifier = modifier.fillMaxSize().padding(24.dp)) {
+    Column(
+        modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp)
+    ) {
         Text("Mis documentos")
         Spacer(Modifier.height(16.dp))
         Text("Selecciona un archivo PDF o Word")
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(20.dp))
 
         Button(
             onClick = {
@@ -105,5 +127,39 @@ fun PantallaDocumentos(modifier: Modifier = Modifier) {
 
         Spacer(Modifier.height(16.dp))
         Text(mensaje)
+        Spacer(Modifier.height(24.dp))
+        Text("Documentos guardados")
+        Spacer(Modifier.height(12.dp))
+
+        if (documentos.isEmpty()) {
+            Text("No hay documentos guardados")
+        } else {
+            documentos.forEach { archivo ->
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = nombreDocumento(archivo),
+                        modifier = Modifier.weight(1f),
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    OutlinedButton(
+                        onClick = {
+                            try {
+                                abrirDocumento(contexto, archivo)
+                            } catch (e: Exception) {
+                                mensaje = "No se pudo abrir el documento. Comprueba que tengas una aplicación compatible"
+                            }
+                        }
+                    ) {
+                        Text("Ver")
+                    }
+                }
+            }
+        }
     }
 }

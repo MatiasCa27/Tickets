@@ -38,15 +38,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val nombre = intent.getStringExtra("nombre") ?: "Funcionario"
+        val usuarioId = intent.getIntExtra("usuarioId", -1)
 
         setContent {
-            PantallaPrincipal(nombre) {
+            PantallaPrincipal(nombre, usuarioId) {
                 val intent = Intent(this@HomeActivity, MainActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                 startActivity(intent)
@@ -57,9 +61,20 @@ class HomeActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaPrincipal(nombre: String, onCerrarSesion: () -> Unit) {
+fun PantallaPrincipal(nombre: String, usuarioId: Int, onCerrarSesion: () -> Unit) {
     val contexto = LocalContext.current
     var menuAbierto by remember { mutableStateOf(false) }
+    var nombreActual by remember { mutableStateOf(nombre) }
+
+    val perfilLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { resultado ->
+        if (resultado.resultCode == Activity.RESULT_OK) {
+            resultado.data?.getStringExtra("nombre")?.let {
+                nombreActual = it
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -108,7 +123,9 @@ fun PantallaPrincipal(nombre: String, onCerrarSesion: () -> Unit) {
                     }
 
                     IconButton(onClick = {
-                        Toast.makeText(contexto, "Perfil próximamente", Toast.LENGTH_SHORT).show()
+                        val intent = Intent(contexto, PerfilActivity::class.java)
+                        intent.putExtra("usuarioId", usuarioId)
+                        perfilLauncher.launch(intent)
                     }) {
                         Icon(Icons.Filled.Person, contentDescription = "Perfil")
                     }
@@ -129,7 +146,7 @@ fun PantallaPrincipal(nombre: String, onCerrarSesion: () -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Bienvenido, $nombre", style = MaterialTheme.typography.headlineSmall)
+            Text("Bienvenido, $nombreActual", style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(12.dp))
             Text("Sistema de solicitudes de mantención")
         }

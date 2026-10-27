@@ -58,7 +58,7 @@ fun PantallaRegistro(dao: UsuarioDAO, modifier: Modifier = Modifier, onVolver: (
     var nombre by remember { mutableStateOf("") }
     var cargo by remember { mutableStateOf("") }
     var correo by remember { mutableStateOf("") }
-    var contrasena by remember { mutableStateOf("") }
+    var contraseña by remember { mutableStateOf("") }
     var confirmar by remember { mutableStateOf("") }
     var mensaje by remember { mutableStateOf("") }
     var guardando by remember { mutableStateOf(false) }
@@ -95,8 +95,8 @@ fun PantallaRegistro(dao: UsuarioDAO, modifier: Modifier = Modifier, onVolver: (
         Spacer(Modifier.height(12.dp))
 
         TextField(
-            value = contrasena,
-            onValueChange = { contrasena = it },
+            value = contraseña,
+            onValueChange = { contraseña = it },
             label = { Text("Contraseña") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
@@ -117,15 +117,15 @@ fun PantallaRegistro(dao: UsuarioDAO, modifier: Modifier = Modifier, onVolver: (
         Button(
             onClick = {
                 when {
-                    nombre.isBlank() || cargo.isBlank() || correo.isBlank() || contrasena.isBlank() || confirmar.isBlank() -> mensaje = "Complete todos los campos"
+                    nombre.isBlank() || cargo.isBlank() || correo.isBlank() || contraseña.isBlank() || confirmar.isBlank() -> mensaje = "Complete todos los campos"
                     !Patterns.EMAIL_ADDRESS.matcher(correo.trim()).matches() -> mensaje = "Ingrese un correo válido"
-                    contrasena.length < 8 -> mensaje = "La contraseña debe tener mínimo 8 caracteres"
-                    contrasena != confirmar -> mensaje = "Las contraseñas no coinciden"
+                    contraseña.length < 8 -> mensaje = "La contraseña debe tener mínimo 8 caracteres"
+                    contraseña != confirmar -> mensaje = "Las contraseñas no coinciden"
                     else -> {
                         val nombreFinal = nombre.trim()
                         val cargoFinal = cargo.trim()
                         val correoFinal = correo.trim().lowercase(Locale.ROOT)
-                        val clave = contrasena
+                        val clave = contraseña
                         guardando = true
                         scope.launch {
                             try {
@@ -142,14 +142,14 @@ fun PantallaRegistro(dao: UsuarioDAO, modifier: Modifier = Modifier, onVolver: (
                                             nombre = nombreFinal,
                                             cargo = cargoFinal,
                                             correo = correoFinal,
-                                            contrasenaHash = hash,
+                                            contraseñaHash = hash,
                                             salt = Base64.encodeToString(salt, Base64.NO_WRAP)
                                         )
                                     )
                                     nombre = ""
                                     cargo = ""
                                     correo = ""
-                                    contrasena = ""
+                                    contraseña = ""
                                     confirmar = ""
                                     mensaje = "Usuario registrado correctamente"
                                 }

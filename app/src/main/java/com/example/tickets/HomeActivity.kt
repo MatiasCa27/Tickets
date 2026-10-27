@@ -115,8 +115,9 @@ fun PantallaPrincipal(nombre: String, onCerrarSesion: () -> Unit) {
                 },
                 floatingActionButton = {
                     FloatingActionButton(onClick = {
-                        Toast.makeText(contexto, "Crear ticket próximamente", Toast.LENGTH_SHORT).show()
-                    }) {
+                        val intent = Intent(contexto, CrearTicketActivity::class.java)
+                        contexto.startActivity(intent)
+                    })
                         Icon(Icons.Filled.Add, contentDescription = "Crear ticket")
                     }
                 }

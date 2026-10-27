@@ -93,7 +93,8 @@ fun PantallaPrincipal(nombre: String, usuarioId: Int, onCerrarSesion: () -> Unit
                             text = { Text("Documentos") },
                             onClick = {
                                 menuAbierto = false
-                                Toast.makeText(contexto, "Documentos próximamente", Toast.LENGTH_SHORT).show()
+                                val intent = Intent(contexto, DocumentosActivity::class.java)
+                                contexto.startActivity(intent)
                             }
                         )
                         DropdownMenuItem(

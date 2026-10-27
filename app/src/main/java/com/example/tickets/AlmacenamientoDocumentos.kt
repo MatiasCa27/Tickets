@@ -1,8 +1,10 @@
 package com.example.tickets
 
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.provider.OpenableColumns
+import androidx.core.content.FileProvider
 import java.io.File
 import java.io.IOException
 import java.util.Locale
@@ -42,4 +44,38 @@ fun guardarDocumento(contexto: Context, uri: Uri): String {
     }
 
     return nombreSeguro
+}
+
+fun listarDocumentos(contexto: Context): List<File> {
+    val carpeta = File(contexto.filesDir, "documentos")
+    return carpeta.listFiles()
+        ?.filter { it.isFile && it.extension.lowercase(Locale.ROOT) in listOf("pdf", "doc", "docx") }
+        ?.sortedByDescending { it.lastModified() }
+        ?: emptyList()
+}
+
+fun nombreDocumento(archivo: File): String {
+    return archivo.name.substringAfter("_", archivo.name)
+}
+
+fun abrirDocumento(contexto: Context, archivo: File) {
+    val tipo = when (archivo.extension.lowercase(Locale.ROOT)) {
+        "pdf" -> "application/pdf"
+        "doc" -> "application/msword"
+        "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        else -> throw IllegalArgumentException("Formato no permitido")
+    }
+
+    val uri = FileProvider.getUriForFile(
+        contexto,
+        "${contexto.packageName}.fileprovider",
+        archivo
+    )
+
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, tipo)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+
+    contexto.startActivity(Intent.createChooser(intent, "Abrir documento"))
 }

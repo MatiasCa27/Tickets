@@ -19,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -74,7 +76,9 @@ fun PantallaDocumentos(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     var mensaje by remember { mutableStateOf("") }
     var cargando by remember { mutableStateOf(false) }
+    var eliminando by remember { mutableStateOf(false) }
     var documentos by remember { mutableStateOf(listOf<File>()) }
+    var archivoEliminar by remember { mutableStateOf<File?>(null) }
 
     LaunchedEffect(Unit) {
         documentos = withContext(Dispatchers.IO) {
@@ -120,7 +124,7 @@ fun PantallaDocumentos(modifier: Modifier = Modifier) {
                 ))
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !cargando
+            enabled = !cargando && !eliminando
         ) {
             Text(if (cargando) "Guardando..." else "Cargar documento")
         }
@@ -147,19 +151,80 @@ fun PantallaDocumentos(modifier: Modifier = Modifier) {
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(Modifier.width(8.dp))
+
                     OutlinedButton(
                         onClick = {
                             try {
                                 abrirDocumento(contexto, archivo)
                             } catch (e: Exception) {
-                                mensaje = "No se pudo abrir el documento. Comprueba que tengas una aplicación compatible"
+                                mensaje = "No se pudo abrir el documento"
                             }
-                        }
+                        },
+                        enabled = !eliminando
                     ) {
                         Text("Ver")
+                    }
+
+                    Spacer(Modifier.width(6.dp))
+
+                    OutlinedButton(
+                        onClick = { archivoEliminar = archivo },
+                        enabled = !eliminando
+                    ) {
+                        Text("Eliminar")
                     }
                 }
             }
         }
+    }
+
+    archivoEliminar?.let { archivo ->
+        AlertDialog(
+            onDismissRequest = {
+                if (!eliminando) archivoEliminar = null
+            },
+            title = { Text("Eliminar documento") },
+            text = {
+                Text("¿Estás seguro de que deseas eliminar ${nombreDocumento(archivo)}?")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        eliminando = true
+                        scope.launch {
+                            try {
+                                val eliminado = withContext(Dispatchers.IO) {
+                                    eliminarDocumento(contexto, archivo)
+                                }
+                                if (eliminado) {
+                                    documentos = withContext(Dispatchers.IO) {
+                                        listarDocumentos(contexto)
+                                    }
+                                    mensaje = "Documento eliminado correctamente"
+                                } else {
+                                    mensaje = "No se pudo eliminar el documento"
+                                }
+                            } catch (e: Exception) {
+                                mensaje = "Ocurrió un error al eliminar el documento"
+                            } finally {
+                                eliminando = false
+                                archivoEliminar = null
+                            }
+                        }
+                    },
+                    enabled = !eliminando
+                ) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { archivoEliminar = null },
+                    enabled = !eliminando
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }

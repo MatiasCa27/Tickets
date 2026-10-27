@@ -79,3 +79,10 @@ fun abrirDocumento(contexto: Context, archivo: File) {
 
     contexto.startActivity(Intent.createChooser(intent, "Abrir documento"))
 }
+
+fun eliminarDocumento(contexto: Context, archivo: File): Boolean {
+    val carpeta = File(contexto.filesDir, "documentos").canonicalFile
+    val destino = archivo.canonicalFile
+    if (destino.parentFile != carpeta || !destino.isFile) return false
+    return destino.delete()
+}

@@ -1,11 +1,14 @@
 package com.example.tickets
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,9 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.BottomAppBar
@@ -23,7 +24,6 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -38,9 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import android.app.Activity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 
 class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,7 +76,7 @@ fun PantallaPrincipal(nombre: String, usuarioId: Int, onCerrarSesion: () -> Unit
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("MPAZ Ticket") },
+                title = { Text("Tickets MPAZ") },
                 actions = {
                     IconButton(onClick = { menuAbierto = true }) {
                         Icon(Icons.Filled.MoreVert, contentDescription = "Menú")
@@ -118,25 +115,11 @@ fun PantallaPrincipal(nombre: String, usuarioId: Int, onCerrarSesion: () -> Unit
                     }
 
                     IconButton(onClick = {
-                        Toast.makeText(contexto, "Mis tickets próximamente", Toast.LENGTH_SHORT).show()
-                    }) {
-                        Icon(Icons.Filled.List, contentDescription = "Mis tickets")
-                    }
-
-                    IconButton(onClick = {
                         val intent = Intent(contexto, PerfilActivity::class.java)
                         intent.putExtra("usuarioId", usuarioId)
                         perfilLauncher.launch(intent)
                     }) {
                         Icon(Icons.Filled.Person, contentDescription = "Perfil")
-                    }
-                },
-                floatingActionButton = {
-                    FloatingActionButton(onClick = {
-                        val intent = Intent(contexto, CrearTicketActivity::class.java)
-                        contexto.startActivity(intent)
-                    })
-                        Icon(Icons.Filled.Add, contentDescription = "Crear ticket")
                     }
                 }
             )
@@ -149,7 +132,7 @@ fun PantallaPrincipal(nombre: String, usuarioId: Int, onCerrarSesion: () -> Unit
         ) {
             Text("Bienvenido, $nombreActual", style = MaterialTheme.typography.headlineSmall)
             Spacer(Modifier.height(12.dp))
-            Text("Sistema de solicitudes de mantención")
+            Text("Sistema de gestión de la Escuela Escritora Marcela Paz")
         }
     }
 }

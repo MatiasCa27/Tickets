@@ -49,8 +49,9 @@ class LoginActivity : ComponentActivity() {
                     dao = db.usuarioDao(),
                     modifier = Modifier.padding(padding),
                     onVolver = { finish() },
-                    onIngreso = { nombre ->
+                    onIngreso = { id, nombre ->
                         val intent = Intent(this, HomeActivity::class.java)
+                        intent.putExtra("usuarioId", id)
                         intent.putExtra("nombre", nombre)
                         startActivity(intent)
                         finish()
@@ -66,7 +67,7 @@ fun PantallaLogin(
     dao: UsuarioDAO,
     modifier: Modifier = Modifier,
     onVolver: () -> Unit,
-    onIngreso: (String) -> Unit
+    onIngreso: (Int, String) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     var correo by remember { mutableStateOf("") }
@@ -113,7 +114,7 @@ fun PantallaLogin(
                                 if (usuario != null && withContext(Dispatchers.Default) {
                                         Seguridad.verificar(clave, usuario.contraseñaHash, usuario.salt)
                                     }) {
-                                    onIngreso(usuario.nombre)
+                                    onIngreso(usuario.id, usuario.nombre)
                                 } else {
                                     mensaje = "Correo o contraseña incorrectos"
                                 }

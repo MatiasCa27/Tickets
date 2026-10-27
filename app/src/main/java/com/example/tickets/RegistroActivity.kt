@@ -42,7 +42,7 @@ class RegistroActivity : ComponentActivity() {
             applicationContext,
             AppDatabase::class.java,
             "tickets.db"
-        ).addMigrations(MIGRATION_1_2).build()
+        ).build()
 
         setContent {
             Scaffold { padding ->

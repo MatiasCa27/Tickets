@@ -36,7 +36,7 @@ class PerfilActivity : ComponentActivity() {
         val usuarioId = intent.getIntExtra("usuarioId", -1)
         val db = Room.databaseBuilder(
             applicationContext,
-            AppDatabase::class.java,
+            `AppDatabase.kt`::class.java,
             "tickets.db"
         ).build()
 

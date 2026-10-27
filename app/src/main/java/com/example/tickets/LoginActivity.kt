@@ -39,7 +39,7 @@ class LoginActivity : ComponentActivity() {
         enableEdgeToEdge()
         val db = Room.databaseBuilder(
             applicationContext,
-            AppDatabase::class.java,
+            `AppDatabase.kt`::class.java,
             "tickets.db"
         ).build()
 

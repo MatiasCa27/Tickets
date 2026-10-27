@@ -25,10 +25,6 @@
             android:exported="false" />
 
         <activity
-            android:name=".CrearTicketActivity"
-            android:exported="false" />
-
-        <activity
             android:name=".PerfilActivity"
             android:exported="false" />
 

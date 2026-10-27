@@ -11,7 +11,7 @@ data class Usuario(
     val nombre: String,
     val cargo: String,
     val correo: String,
-    val contrasenaHash: String,
+    val contraseñaHash: String,
     val salt: String,
     val rol: String = "SOLICITANTE"
 )
